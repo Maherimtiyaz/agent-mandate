@@ -3,7 +3,7 @@
 The team captain submits from the Hack Days dashboard.
 
 - [ ] Public GitHub repository containing this folder at its root, with this README and setup steps
-- [ ] Demo video (YouTube unlisted, Loom, or Google Drive with link sharing on), following `docs/DEMO_VIDEO_SCRIPT.md`
+- [ ] Demo video: `mandate-demo.mp4` (1:54, recorded from a real Claude run). Upload it to YouTube as **Unlisted** (or Google Drive with link sharing on), then put the link in the README and on the last deck slide
 - [ ] Optional: deployed link (Render via `render.yaml`)
 - [ ] Optional: pitch deck (problem, approach, architecture, results): the 7-slide Mandate deck. Fill in the `[Team name]`, repo and video placeholders on slides 1 and 7, then export it as PDF (Share, then Export) and attach or link it
 - [ ] Run `python -m pytest -q tests` and `python -m mandate.eval.run` one last time; commit `docs/RESULTS.md`

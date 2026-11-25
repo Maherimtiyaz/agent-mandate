@@ -10,7 +10,7 @@ You need Python 3.10 or newer and Git.
 macOS / Linux:
 
 ```bash
-git clone <your-repo-url> agent-mandate
+git clone https://github.com/Maherimtiyaz/agent-mandate.git
 cd agent-mandate
 python3 -m venv .venv
 .venv/bin/pip install -e ".[mcp]"
@@ -19,7 +19,7 @@ python3 -m venv .venv
 Windows (PowerShell):
 
 ```powershell
-git clone <your-repo-url> agent-mandate
+git clone https://github.com/Maherimtiyaz/agent-mandate.git
 cd agent-mandate
 py -m venv .venv
 .venv\Scripts\pip install -e ".[mcp]"

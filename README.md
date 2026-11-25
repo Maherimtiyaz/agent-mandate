@@ -1,6 +1,8 @@
 # Mandate: delegated authority for AI agents
 
-> **Homingo Hack Days, Edition 01 · Track: Agents · Problem statement A1, "Software built for agents"**
+> **Homingo Hack Days, Edition 01 · Track: Agents · Problem statement A1, "Software built for agents"** · Solo build by [@Maherimtiyaz](https://github.com/Maherimtiyaz)
+>
+> **Demo video (2 min, real Claude agent):** [ADD YOUR VIDEO LINK HERE]
 
 AI agents are starting to shop, book and pay for people. They do it with the tools we built for humans: a saved card, an API key, a password. That gives an agent **all of your authority, with no limits, no proof of who it acts for, and no way to take it back.** One prompt injection on a product page, one leaked log file or one runaway loop, and the money is gone.
 
