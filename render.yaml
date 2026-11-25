@@ -1,0 +1,18 @@
+# Deploy on Render: dashboard -> New -> Blueprint -> pick this repo -> set MANDATE_ADMIN_TOKEN -> Apply.
+# Free plan: the service sleeps after a while without traffic, and the first visit then takes about a minute.
+# The SQLite file lives in /tmp, so a restart or redeploy starts with an empty dashboard (fine for a demo).
+services:
+  - type: web
+    name: agent-mandate
+    runtime: python
+    plan: free
+    buildCommand: pip install .
+    startCommand: uvicorn mandate.server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: MANDATE_DB
+        value: /tmp/mandate.db
+      - key: MANDATE_ADMIN_TOKEN   # required: without it the dashboard refuses every remote request
+        sync: false

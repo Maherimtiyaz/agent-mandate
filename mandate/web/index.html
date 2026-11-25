@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mandate · control what your AI agents can do</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#fff; --ink:#14171f; --muted:#5d6472; --line:#e3e6ec;
+  --brand:#3b5bdb; --ok:#1f8f4e; --ok-bg:#e7f6ee; --bad:#c92a2a; --bad-bg:#fdecec;
+  --warn:#b25e09; --warn-bg:#fff4e2; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0f1115; --panel:#171a21; --ink:#e8eaf0; --muted:#9aa1b0; --line:#272b35;
+  --brand:#7c95ff; --ok:#5fd394; --ok-bg:#12291d; --bad:#ff8080; --bad-bg:#2e1414; --warn:#ffb85c; --warn-bg:#2d2112;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:14px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:2;flex-wrap:wrap}
+.logo{font-weight:800;font-size:18px;letter-spacing:-.02em}
+.logo span{color:var(--brand)}
+.sub{color:var(--muted)}
+.grow{flex:1}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--line)}
+.badge.ok{color:var(--ok);background:var(--ok-bg);border-color:transparent}
+.badge.bad{color:var(--bad);background:var(--bad-bg);border-color:transparent}
+.badge.warn{color:var(--warn);background:var(--warn-bg);border-color:transparent}
+main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;padding:20px 24px;max-width:1400px;margin:0 auto}
+@media (max-width:900px){main{grid-template-columns:1fr;padding:16px}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:20px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.count{background:var(--brand);color:#fff;border-radius:999px;padding:0 7px;font-size:11px}
+.empty{color:var(--muted);font-style:italic;padding:6px 0}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.card.attn{border-color:var(--warn);background:var(--warn-bg)}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.title{font-weight:650}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+button{font:inherit;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--brand)}
+button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+button.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+button.danger{color:var(--bad);border-color:var(--bad)}
+button:disabled{opacity:.5;cursor:default}
+.bar{height:8px;background:var(--bg);border-radius:99px;overflow:hidden;margin-top:8px;border:1px solid var(--line)}
+.bar>div{height:100%;background:var(--brand)}
+.feed{max-height:520px;overflow:auto}
+.ev{display:grid;grid-template-columns:62px 82px 1fr;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;align-items:start}
+.ev time{color:var(--muted);font-family:var(--mono);font-size:12px}
+.pill{font-size:11px;font-weight:700;text-transform:uppercase;padding:1px 6px;border-radius:5px;text-align:center}
+.pill.allow{color:var(--ok);background:var(--ok-bg)} .pill.deny{color:var(--bad);background:var(--bad-bg)}
+.pill.pending_approval,.pill.pending{color:var(--warn);background:var(--warn-bg)} .pill.info{color:var(--muted);background:var(--bg)}
+code,.mono{font-family:var(--mono);font-size:12px}
+.console{background:#0b0d12;color:#d7dce6;border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12px;min-height:120px;max-height:300px;overflow:auto;white-space:pre-wrap}
+.console .blk{color:#ff8c8c} .console .okl{color:#7ee2a8} .console .own{color:#ffc46b}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px}
+.stat b{display:block;font-size:20px}
+.stat small{color:var(--muted)}
+.vs{color:var(--muted);font-size:12px}
+input{font:inherit;padding:5px 8px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Man<span>date</span></div>
+  <div class="sub">You decide what your AI agents may do. Every service can check it.</div>
+  <div class="grow"></div>
+  <span id="chain" class="badge">audit: checking…</span>
+  <span id="tokenbox" hidden><input id="token" type="password" placeholder="admin token" size="12"></span>
+</header>
+
+<main>
+  <div>
+    <section>
+      <h2>Needs your decision <span id="pendcount" class="count" hidden></span></h2>
+      <div id="pending"><div class="empty">Nothing waiting. Your agents are inside their limits.</div></div>
+    </section>
+    <section>
+      <h2>Your agents and their mandates</h2>
+      <div id="mandates"><div class="empty">No mandates yet. Run the demo agent →</div></div>
+    </section>
+    <section>
+      <h2>Measured: same attacks, with and without Mandate</h2>
+      <div id="bench"><div class="empty">Run <code>python -m mandate.eval.run</code> to generate results.</div></div>
+    </section>
+  </div>
+  <div>
+    <section>
+      <h2>Demo agent</h2>
+      <div class="row" style="margin-bottom:10px">
+        <button class="primary" id="run">▶ Run demo agent</button>
+        <span class="sub" id="runstate">A household agent shops at KiranaKart, meets a prompt injection, a leaked token and a revocation.</span>
+      </div>
+      <div class="console" id="console">Waiting to start…</div>
+    </section>
+    <section>
+      <h2>Live activity</h2>
+      <div class="feed" id="feed"><div class="empty">No activity yet.</div></div>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rs = n => n == null ? "no limit" : "₹" + Number(n).toLocaleString("en-IN", {maximumFractionDigits: 0});
+let token = ""; try { token = localStorage.getItem("mandate_admin") || ""; } catch (e) {}
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {...opts, headers: {"Content-Type": "application/json", "X-Admin-Token": token, ...(opts.headers || {})}});
+  if (r.status === 401) { $("#tokenbox").hidden = false; throw new Error("auth"); }
+  return r.json();
+}
+$("#token").addEventListener("change", e => { token = e.target.value; try { localStorage.setItem("mandate_admin", token); } catch (_) {} refresh(); });
+
+async function decide(kind, id, approve) {
+  const url = kind === "req" ? `/v1/mandate-requests/${id}/decide` : `/v1/approvals/${id}/decide`;
+  await api(url, {method: "POST", body: JSON.stringify({approve})});
+  refresh();
+}
+async function revoke(jti) {
+  if (!confirm("Revoke this agent's mandate now? Every service will refuse it immediately.")) return;
+  await api(`/v1/mandates/${jti}/revoke`, {method: "POST"}); refresh();
+}
+window.decide = decide; window.revoke = revoke;
+
+function limitChips(p) {
+  const L = p.limits, c = [];
+  c.push(`per order ≤ ${rs(L.max_per_tx)}`);
+  if (p.approval_above != null) c.push(`ask me above ${rs(p.approval_above)}`);
+  c.push(L.merchants ? `only at ${L.merchants.join(", ")}` : "any merchant");
+  if ((L.categories_blocked || []).length) c.push(`never: ${L.categories_blocked.join(", ")}`);
+  c.push(`can: ${p.scopes.join(", ")}`);
+  c.push(`expires ${new Date(p.exp * 1000).toLocaleString()}`);
+  return c.map(x => `<span class="chip">${esc(x)}</span>`).join("");
+}
+
+function renderState(s) {
+  const pend = [];
+  for (const r of s.mandate_requests.filter(r => r.status === "pending")) {
+    const spec = JSON.parse(r.request);
+    const agent = s.agents.find(a => a.id === r.agent_id);
+    pend.push(`<div class="card attn"><div class="row"><span class="title">🔑 ${esc(agent ? agent.name : r.agent_id)} asks for a mandate</span><span class="grow"></span>
+      <button class="ok" onclick="decide('req','${esc(r.id)}',true)">Grant</button><button class="danger" onclick="decide('req','${esc(r.id)}',false)">Refuse</button></div>
+      <div class="sub">${esc(spec.purpose)} · budget ${rs(spec.budget)}</div>
+      <div class="chips">${limitChips({limits: {...spec, merchants: spec.merchants}, scopes: spec.scopes, approval_above: spec.approval_above, exp: Date.now()/1000 + spec.ttl_seconds})}</div></div>`);
+  }
+  for (const a of s.approvals.filter(a => a.status === "pending")) {
+    const i = a.intent, why = i.why === "possible_duplicate" ? "Looks like a repeat of an order placed minutes ago" : `Above your approval line`;
+    pend.push(`<div class="card attn"><div class="row"><span class="title">🛒 Pay ${rs(i.amount)} at ${esc(i.merchant)}?</span><span class="grow"></span>
+      <button class="ok" onclick="decide('apr','${esc(a.approval_id)}',true)">Approve</button><button class="danger" onclick="decide('apr','${esc(a.approval_id)}',false)">Deny</button></div>
+      <div class="sub">${esc(why)} · ${(i.items || []).map(x => `${esc(x.qty)}× ${esc(x.id)}`).join(", ")}</div></div>`);
+  }
+  $("#pending").innerHTML = pend.join("") || `<div class="empty">Nothing waiting. Your agents are inside their limits.</div>`;
+  $("#pendcount").hidden = !pend.length; $("#pendcount").textContent = pend.length;
+
+  $("#mandates").innerHTML = s.mandates.map(m => {
+    const p = m.payload, b = p.limits.budget, pct = b ? Math.min(100, 100 * m.spent / b) : 0;
+    const cls = m.status === "active" ? "ok" : "bad";
+    return `<div class="card"><div class="row"><span class="title">🤖 ${esc(p.agent_name)}</span><span class="badge ${cls}">${esc(m.status)}</span>
+      <span class="grow"></span>${m.status === "active" ? `<button class="danger" onclick="revoke('${esc(m.jti)}')">Revoke</button>` : ""}</div>
+      <div class="sub">${esc(p.purpose || "")} · for ${esc(p.principal)} · <span class="mono">${esc(m.jti)}</span></div>
+      <div class="row" style="margin-top:6px"><span>Spent <b>${rs(m.spent)}</b> of ${rs(b)}</span></div>
+      <div class="bar"><div style="width:${pct}%"></div></div>
+      <div class="chips">${limitChips(p)}</div></div>`;
+  }).join("") || `<div class="empty">No mandates yet. Run the demo agent →</div>`;
+}
+
+const EVLABEL = {"agent.registered": "agent registered", "mandate.requested": "asked for a mandate", "mandate.issued": "mandate granted",
+  "mandate.revoked": "mandate revoked", "approval.approved": "you approved", "approval.denied": "you denied", "mandate.request_denied": "you refused"};
+function renderFeed(entries) {
+  $("#feed").innerHTML = entries.map(e => {
+    const t = new Date(e.ts * 1000).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false});
+    const d = e.data;
+    if (e.event === "authorize") {
+      const what = d.action === "payments:charge" ? `${rs(d.amount)} at ${esc(d.merchant)}` : esc(d.action);
+      const why = d.reason ? ` — <code>${esc(d.reason)}</code>` : "";
+      return `<div class="ev"><time>${t}</time><span class="pill ${esc(d.decision)}">${esc(d.decision.replace("_approval", ""))}</span><div>${what}${why}</div></div>`;
+    }
+    return `<div class="ev"><time>${t}</time><span class="pill info">event</span><div>${esc(EVLABEL[e.event] || e.event)}</div></div>`;
+  }).join("") || `<div class="empty">No activity yet.</div>`;
+}
+
+function renderBench(r) {
+  if (!r || !r.mandate) return;
+  const b = r.baseline, k = r.card, m = r.mandate, lat = r.latency_http;
+  const vs = (f) => `vs ${f(b)} with an API key${k ? `, ${f(k)} with a capped card` : ""}`;
+  $("#bench").innerHTML = `<div class="stats">
+    <div class="stat"><small>Attacks that worked</small><b>${m.attacks_succeeded}/${m.attacks_total}</b><span class="vs">${vs(x => `${x.attacks_succeeded}/${x.attacks_total}`)}</span></div>
+    <div class="stat"><small>Money lost</small><b>${rs(m.rupees_lost)}</b><span class="vs">${vs(x => rs(x.rupees_lost))}</span></div>
+    <div class="stat"><small>Real tasks done</small><b>${m.legit_completed}/${m.legit_total}</b><span class="vs">same as the others</span></div>
+    <div class="stat"><small>Added latency (HTTP)</small><b>${lat ? lat.overhead_p50_ms.toFixed(1) + " ms" : "–"}</b><span class="vs">${lat ? `p50; p95 ${lat.overhead_p95_ms.toFixed(1)} ms` : "run the benchmark"}</span></div></div>
+    <div class="sub" style="margin-top:8px">${m.scenarios.length} scenarios in three setups, generated ${esc(r.generated)}. Known limits (attacks Mandate bounds but doesn't stop): ${rs(m.limits_rupees_lost)} lost, same as a capped card. See docs/RESULTS.md.</div>`;
+}
+
+function renderConsole(d) {
+  $("#run").disabled = d.running;
+  if (d.running) $("#runstate").textContent = "Running… approve its requests on the left when they appear.";
+  else if (d.log.length) $("#runstate").textContent = "Finished. Run it again any time.";
+  if (!d.log.length) return;
+  $("#console").innerHTML = d.log.map(l => {
+    const cls = /mandate_|bad_|category_|replayed|denied|revoked|error/.test(l) && !/^\[agent\] (got|asked)/.test(l) ? "blk"
+      : /-> (201|200)|confirmed|intact: True/.test(l) ? "okl" : /dashboard|\[owner\]/.test(l) ? "own" : "";
+    return `<div class="${cls}">${esc(l)}</div>`;
+  }).join("");
+  $("#console").scrollTop = 1e9;
+}
+
+$("#run").addEventListener("click", async () => { $("#console").textContent = "Starting…"; await api("/v1/demo/run", {method: "POST"}); });
+
+let benchLoaded = false;
+async function refresh() {
+  try {
+    const [s, a, v, d] = await Promise.all([api("/v1/admin/state"), api("/v1/audit?limit=60"), api("/v1/audit/verify"), api("/v1/demo/log")]);
+    renderState(s); renderFeed(a.entries); renderConsole(d);
+    $("#chain").className = "badge " + (v.ok ? "ok" : "bad");
+    $("#chain").textContent = v.ok ? `✓ audit chain intact · ${v.checked} entries` : `✗ audit chain BROKEN at #${v.broken_at}`;
+    if (!benchLoaded) { const r = await api("/v1/benchmark"); if (r && r.mandate) { renderBench(r); benchLoaded = true; } }
+  } catch (e) { /* retry next tick */ }
+}
+refresh(); setInterval(refresh, 1200);
+</script>
+</body>
+</html>
